@@ -6,13 +6,24 @@ services:
       - "8080:8080"
     environment:
       DB_URL: jdbc:postgresql://pg:5432/${DB_NAME}
-      DB_TEST_URL: jdbc:postgresql://pgtest:5432/${DB_TEST_NAME}
       DB_USERNAME: $DB_USERNAME
       DB_PASSWORD: $DB_PASSWORD
       IMAGES_DIR: static
-      IMAGES_DIR_TEST: static/test
     depends_on:
       - pg
+  shop_test:
+    image: shop_test
+    build:
+      context: .
+      dockerfile: ./test.Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      DB_TEST_URL: jdbc:postgresql://pgtest:5432/${DB_TEST_NAME}
+      DB_USERNAME: $DB_USERNAME
+      DB_PASSWORD: $DB_PASSWORD
+      IMAGES_DIR_TEST: static/test
+    depends_on:
       - pgtest
   pg:
     image: postgres
