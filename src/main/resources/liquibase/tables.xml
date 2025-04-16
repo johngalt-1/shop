@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="product" author="Ilya">
+        <sql>
+            CREATE TABLE IF NOT EXISTS "${schemaName}"."product" (
+                "id" BIGSERIAL PRIMARY KEY,
+                "title" TEXT NOT NULL,
+                "description" TEXT,
+                "price" NUMERIC NOT NULL,
+                "image" TEXT NOT NULL,
+                "creation_time" TIMESTAMPTZ NOT NULL,
+                "update_time" TIMESTAMPTZ NOT NULL,
+                "deleted" BOOLEAN NOT NULL
+            );
+            COMMENT ON TABLE "${schemaName}"."product" IS 'Товар';
+            COMMENT ON COLUMN "${schemaName}"."product"."title" IS 'Название товара';
+            COMMENT ON COLUMN "${schemaName}"."product"."description" IS 'Описание товара';
+            COMMENT ON COLUMN "${schemaName}"."product"."price" IS 'Цена товара в рублях';
+            COMMENT ON COLUMN "${schemaName}"."product"."image" IS 'Ссылка на изображение товара';
+            COMMENT ON COLUMN "${schemaName}"."product"."creation_time" IS 'Время создания товара';
+            COMMENT ON COLUMN "${schemaName}"."product"."update_time" IS 'Время обновления товара';
+            COMMENT ON COLUMN "${schemaName}"."product"."deleted" IS 'Удалён ли товар';
+        </sql>
+    </changeSet>
+    <changeSet id="i__product__creation_time" author="Ilya">
+        <sql>
+            CREATE INDEX IF NOT EXISTS "i__product__creation_time"
+            ON "${schemaName}"."product" ("creation_time")
+            WHERE NOT "deleted";
+        </sql>
+    </changeSet>
+    <changeSet id="i__product__title__creation_time" author="Ilya">
+        <sql>
+            CREATE INDEX IF NOT EXISTS "i__product__title__creation_time"
+            ON "${schemaName}"."product" ("title", "creation_time")
+            WHERE NOT "deleted";
+        </sql>
+    </changeSet>
+    <changeSet id="i__product__price__creation_time" author="Ilya">
+        <sql>
+            CREATE INDEX IF NOT EXISTS "i__product__price__creation_time"
+            ON "${schemaName}"."product" ("price", "creation_time")
+            WHERE NOT "deleted";
+        </sql>
+    </changeSet>
+    <changeSet id="product__load_data" author="Ilya">
+        <loadData schemaName="${schemaName}" tableName="product" file="products.csv" relativeToChangelogFile="true">
+            <column name="title" header="title" type="string"/>
+            <column name="description" header="description" type="string"/>
+            <column name="price" header="price"/>
+            <column name="image" header="image" type="string"/>
+            <column name="creation_time" header="creation_time"/>
+            <column name="update_time" header="update_time"/>
+            <column name="deleted" header="deleted"/>
+        </loadData>
+    </changeSet>
+
+    <changeSet id="cart_item" author="Ilya">
+        <sql>
+            CREATE TABLE IF NOT EXISTS "${schemaName}"."cart_item" (
+                "id" BIGSERIAL PRIMARY KEY,
+                "product_id" BIGINT NOT NULL REFERENCES "${schemaName}"."product" ("id"),
+                "amount" INTEGER NOT NULL,
+                "creation_time" TIMESTAMPTZ NOT NULL
+            );
+            COMMENT ON TABLE "${schemaName}"."cart_item" IS 'Товар';
+            COMMENT ON COLUMN "${schemaName}"."cart_item"."product_id" IS 'ID товара';
+            COMMENT ON COLUMN "${schemaName}"."cart_item"."amount" IS 'Количество товара';
+            COMMENT ON COLUMN "${schemaName}"."cart_item"."creation_time" IS 'Время добавления товара в корзину';
+
+            CREATE UNIQUE INDEX IF NOT EXISTS "i__cart_item__product_id__unique"
+            ON "${schemaName}"."cart_item" ("product_id");
+        </sql>
+    </changeSet>
+
+    <changeSet id="order" author="Ilya">
+        <sql>
+            CREATE TABLE IF NOT EXISTS "${schemaName}"."order" (
+                "id" BIGSERIAL PRIMARY KEY,
+                "status" TEXT NOT NULL,
+                "creation_time" TIMESTAMPTZ NOT NULL,
+                "update_time" TIMESTAMPTZ NOT NULL
+            );
+            COMMENT ON TABLE "${schemaName}"."order" IS 'Заказа';
+            COMMENT ON COLUMN "${schemaName}"."order"."status" IS 'Статус заказа';
+            COMMENT ON COLUMN "${schemaName}"."order"."creation_time" IS 'Время создания заказа';
+            COMMENT ON COLUMN "${schemaName}"."order"."update_time" IS 'Время обновления заказа';
+        </sql>
+    </changeSet>
+    <changeSet id="i__order__creation_time" author="Ilya">
+        <sql>
+            CREATE INDEX IF NOT EXISTS "i__order__creation_time"
+            ON "${schemaName}"."order" ("creation_time");
+        </sql>
+    </changeSet>
+    <changeSet id="i__order__status__creation_time" author="Ilya">
+        <sql>
+            CREATE INDEX IF NOT EXISTS "i__order__status__creation_time"
+            ON "${schemaName}"."order" ("status", "creation_time");
+        </sql>
+    </changeSet>
+
+    <changeSet id="order_item" author="Ilya">
+        <sql>
+            CREATE TABLE IF NOT EXISTS "${schemaName}"."order_item" (
+                "id" BIGSERIAL PRIMARY KEY,
+                "order_id" BIGINT NOT NULL REFERENCES "${schemaName}"."order" ("id"),
+                "product_id" BIGINT NOT NULL REFERENCES "${schemaName}"."product" ("id"),
+                "price" NUMERIC NOT NULL,
+                "amount" INTEGER NOT NULL
+            );
+            COMMENT ON TABLE "${schemaName}"."order_item" IS 'Позиция в заказе';
+            COMMENT ON COLUMN "${schemaName}"."order_item"."order_id" IS 'ID заказа';
+            COMMENT ON COLUMN "${schemaName}"."order_item"."product_id" IS 'ID товара';
+            COMMENT ON COLUMN "${schemaName}"."order_item"."price" IS 'Цена товара в заказе';
+            COMMENT ON COLUMN "${schemaName}"."order_item"."amount" IS 'Количество товара в заказе';
+
+
+            CREATE UNIQUE INDEX IF NOT EXISTS "i__order_item__order_id__product_id__unique"
+            ON "${schemaName}"."order_item" ("order_id", "product_id");
+        </sql>
+    </changeSet>
+</databaseChangeLog>

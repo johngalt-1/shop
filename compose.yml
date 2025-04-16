@@ -1,0 +1,43 @@
+services:
+  shop:
+    image: shop
+    build: .
+    ports: 
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://pg:5432/${DB_NAME}
+      DB_USERNAME: $DB_USERNAME
+      DB_PASSWORD: $DB_PASSWORD
+      IMAGES_DIR: static
+    depends_on:
+      - pg
+  shop_test:
+    image: shop_test
+    build:
+      context: .
+      dockerfile: ./test.Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      DB_TEST_URL: jdbc:postgresql://pgtest:5432/${DB_TEST_NAME}
+      DB_USERNAME: $DB_USERNAME
+      DB_PASSWORD: $DB_PASSWORD
+      IMAGES_DIR_TEST: static/test
+    depends_on:
+      - pgtest
+  pg:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_DB: $DB_NAME
+    ports: 
+      - "5433:5432"
+  pgtest:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_DB: $DB_TEST_NAME
+    ports:
+      - "5432:5432"
